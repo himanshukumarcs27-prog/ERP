@@ -1,3 +1,6 @@
 import app from "../backend/server.js";
+import serverless from "serverless-http";
 
-export default app;
+const handler = serverless(app);
+
+export default handler;
