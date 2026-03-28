@@ -1,4 +1,7 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE =
+ BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : "https://erp-ten-pied.vercel.app/api";
 
 // 🔐 Token (login ke baad save kiya hoga)
 const token = localStorage.getItem("token");

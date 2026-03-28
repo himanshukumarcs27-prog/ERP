@@ -1,5 +1,7 @@
 // ========================== CONFIG ==========================
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : "https://erp-ten-pied.vercel.app/api";
 
 const STUDENT_API = `${BASE_URL}/students`;
 const SUBJECT_API = `${BASE_URL}/subjects`;

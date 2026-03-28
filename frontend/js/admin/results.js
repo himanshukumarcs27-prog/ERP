@@ -1,5 +1,9 @@
-const STUDENT_API = "http://localhost:3000/api/students";
-const RESULT_API = "http://localhost:3000/api/results";
+const STUDENT_API =  window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://erp-ten-pied.vercel.app/api";
+const RESULT_API =  window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://erp-ten-pied.vercel.app/api";
 
 let students = [];
 

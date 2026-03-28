@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : "https://erp-ten-pied.vercel.app/api";
 
 // ================== 🔐 LOGIN ==================
 async function login() {
@@ -25,7 +27,6 @@ async function login() {
       throw new Error(data.message || "Login failed");
     }
 
-    // ✅ Correct role saving
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.user?.role);
 
@@ -106,7 +107,7 @@ async function getProtectedData() {
   }
 
   try {
-    const res = await fetch(`${BASE_URL}/student/me`, {
+    const res = await fetch(`${BASE_URL}/students/me`, { // ✅ FIXED
       headers: {
         Authorization: `Bearer ${token}`
       }

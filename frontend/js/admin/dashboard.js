@@ -1,3 +1,6 @@
+ const BASE_URL=window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : "https://erp-ten-pied.vercel.app/api";
 async function initAdminDashboard() {
     const token = localStorage.getItem('token');
     
@@ -8,7 +11,7 @@ async function initAdminDashboard() {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/api/admin/stats', {
+        const response = await fetch(BASE_URL, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 

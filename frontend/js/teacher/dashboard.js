@@ -1,5 +1,7 @@
 // Inside frontend/js/teacher/dashboard.js
-
+const BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : "https://erp-ten-pied.vercel.app/api";
 async function loadTeacherDashboard() {
     const token = localStorage.getItem('token');
     
@@ -10,7 +12,9 @@ async function loadTeacherDashboard() {
 
     try {
         // Fetch teacher specific profile
-        const response = await fetch('http://localhost:5000/api/teacher/dashboard-data', {
+
+     
+        const response = await fetch(BASE_URL, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

@@ -1,4 +1,7 @@
-const API = "http://localhost:3000/api/results/my";
+const API =
+  BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:5000/api"
+  : "https://erp-ten-pied.vercel.app/api";
 
 async function loadResult() {
   const res = await fetch(API);

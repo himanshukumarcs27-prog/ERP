@@ -1,4 +1,7 @@
-const API = "http://localhost:3000/api/subjects";
+const API = 
+  window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://erp-ten-pied.vercel.app/api";
 
 let subjects = [];
 
