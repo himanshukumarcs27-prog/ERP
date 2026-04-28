@@ -2,9 +2,9 @@ import express from "express";
 import {
   generateClassResult,
   getMyResult,getLeaderboard,getSubjectGraph ,
-} from "./controllers/resultController.js";
+} from "../controllers/resultController.js";
 
-import { getClassAnalytics } from "./controllers/resultController.js";
+import { getClassAnalytics } from "../controllers/resultController.js";
 
 
 

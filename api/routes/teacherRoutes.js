@@ -4,7 +4,7 @@ import {
   fetchTeachers,
   getTeacherProfile,
   getTeacherDashboard   // ✅ add this
-} from "./controllers/teacherController.js";
+} from "../controllers/teacherController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
 

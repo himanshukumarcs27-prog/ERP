@@ -3,7 +3,7 @@ import {
   addStudent,
   fetchStudents,
   fetchStudent
-} from "./controllers/studentController.js";
+} from "../controllers/studentController.js";
 
 import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
 

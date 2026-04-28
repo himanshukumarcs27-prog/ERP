@@ -2,7 +2,7 @@ import express from "express";
 import {
   addMarksController,
   getMarksBySubject
-} from "./controllers/markController.js";
+} from "../controllers/markController.js";
 
 import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
 

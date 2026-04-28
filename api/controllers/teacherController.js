@@ -2,9 +2,9 @@ import {
   createTeacher,
   getAllTeachers,
   getTeacherByEmail,
-} from "../../models/Teacher.js";
+} from "../models/Teacher.js";
 
-import supabase from "../../config/supabaseClient.js"; // ✅ ADD THIS
+import supabase from "../config/supabaseClient.js"; // ✅ ADD THIS
 
 // ================= ADD TEACHER =================
 export const addTeacher = async (req, res) => {

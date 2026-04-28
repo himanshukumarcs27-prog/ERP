@@ -6,7 +6,7 @@ import {
   getSubject,
   editSubject,
   removeSubject,
-} from "./controllers/subjectController.js";
+} from "../controllers/subjectController.js";
 
 const router = express.Router();
 
