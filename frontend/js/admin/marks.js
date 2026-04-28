@@ -1,81 +1,113 @@
-const STUDENT_API =  window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
-const SUBJECT_API =  window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
-const MARKS_API =  window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
 
+// ========================== IMPORT API ==========================
+import {
+  getStudents,
+  getSubjects,
+  addMarks,
+  getMarks
+} from "../../api.js";
+
+// ========================== GLOBAL ==========================
 let students = [];
 let subjects = [];
 
-// Load students + subjects
+// ========================== INIT ==========================
 async function init() {
-  const sRes = await fetch(STUDENT_API);
-  students = await sRes.json();
+  try {
+    students = await getStudents();
+    subjects = await getSubjects();
 
-  const subRes = await fetch(SUBJECT_API);
-  subjects = await subRes.json();
+    loadDropdowns();
+    fetchMarks();
 
-  loadDropdowns();
-  fetchMarks();
+  } catch (err) {
+    console.error("Init error:", err.message);
+  }
 }
 
-// Fill dropdowns
+// ========================== DROPDOWNS ==========================
 function loadDropdowns() {
   const studentSelect = document.getElementById("studentSelect");
   const subjectSelect = document.getElementById("subjectSelect");
 
-  studentSelect.innerHTML = `<option>Select Student</option>`;
-  subjectSelect.innerHTML = `<option>Select Subject</option>`;
+  studentSelect.innerHTML = `<option value="">Select Student</option>`;
+  subjectSelect.innerHTML = `<option value="">Select Subject</option>`;
 
   students.forEach(s => {
-    studentSelect.innerHTML += `<option value="${s._id}">${s.name}</option>`;
+    studentSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
   });
 
   subjects.forEach(sub => {
-    subjectSelect.innerHTML += `<option value="${sub._id}">${sub.name}</option>`;
+    subjectSelect.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
   });
 }
 
-// Submit marks
+// ========================== SUBMIT MARKS ==========================
 async function submitMarks() {
   const studentId = document.getElementById("studentSelect").value;
   const subjectId = document.getElementById("subjectSelect").value;
   const marks = document.getElementById("marks").value;
 
-  await fetch(MARKS_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ studentId, subjectId, marks })
-  });
+  if (!studentId || !subjectId || !marks) {
+    alert("Please fill all fields");
+    return;
+  }
 
-  alert("Marks added!");
-  fetchMarks();
+  try {
+    await addMarks({
+      student_id: studentId,
+      subject_id: subjectId,
+      marks: Number(marks),
+      exam_type: "midterm"
+    });
+
+    alert("✅ Marks added!");
+    fetchMarks();
+
+  } catch (err) {
+    console.error("Error adding marks:", err.message);
+  }
 }
 
-// Fetch marks
+// ========================== FETCH MARKS ==========================
 async function fetchMarks() {
-  const res = await fetch(MARKS_API);
-  const data = await res.json();
+  try {
+    // If subject filter needed:
+    const subjectId = document.getElementById("subjectSelect").value;
 
-  const table = document.getElementById("marksTable");
-  table.innerHTML = "";
+    const result = await getMarks(subjectId);
 
-  data.forEach(m => {
-    table.innerHTML += `
-      <tr>
-        <td>${m.student?.name}</td>
-        <td>${m.subject?.name}</td>
-        <td>${m.marks}</td>
-      </tr>
-    `;
-  });
+    const table = document.getElementById("marksTable");
+    table.innerHTML = "";
+
+    if (!result.data || result.data.length === 0) {
+      table.innerHTML = `<tr><td colspan="3">No data found</td></tr>`;
+      return;
+    }
+
+result.data.forEach(m => {
+  table.innerHTML += `
+    <tr>
+      <td>${m.students?.name || "N/A"}</td>
+      <td>${m.subjects?.name || "N/A"}</td>
+      <td>${m.marks}</td>
+      <td>${m.grade || "Not Generated"}</td>
+    </tr>
+  `;
+});
+
+  } catch (err) {
+    console.error("Error fetching marks:", err.message);
+  }
 }
 
-// Init
+// ========================== EVENTS ==========================
+document.getElementById("subjectSelect")
+  ?.addEventListener("change", fetchMarks);
+
+// ========================== GLOBAL ==========================
+window.submitMarks = submitMarks;
+
+// ========================== INIT ==========================
 init();
+

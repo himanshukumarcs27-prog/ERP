@@ -1,73 +1,88 @@
-const STUDENT_API =  window.location.hostname === "localhost"
-    ? "http://localhost:5000/api"
-    : "https://erp-ten-pied.vercel.app/api";
-const RESULT_API =  window.location.hostname === "localhost"
-    ? "http://localhost:5000/api"
-    : "https://erp-ten-pied.vercel.app/api";
 
+// ========================== IMPORT API ==========================
+import { getStudents, getResults } from "../../api.js";
+
+// ========================== GLOBAL ==========================
 let students = [];
+let barChart = null;
+let pieChart = null;
 
-// Load students
+// ========================== INIT ==========================
 async function init() {
-  const res = await fetch(STUDENT_API);
-  students = await res.json();
+  try {
+    students = await getStudents();
 
-  const select = document.getElementById("studentSelect");
+    const select = document.getElementById("studentSelect");
 
-  students.forEach(s => {
-    select.innerHTML += `<option value="${s._id}">${s.name}</option>`;
-  });
+    select.innerHTML = `<option value="">Select Student</option>`;
 
-  select.addEventListener("change", loadResults);
+    students.forEach(s => {
+      select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+    });
+
+    select.addEventListener("change", loadResults);
+
+  } catch (err) {
+    console.error("Error loading students:", err.message);
+  }
 }
 
-// Load results
+// ========================== LOAD RESULTS ==========================
 async function loadResults() {
   const studentId = document.getElementById("studentSelect").value;
 
-  const res = await fetch(`${RESULT_API}/${studentId}`);
-  const data = await res.json();
+  if (!studentId) return;
 
-  const table = document.getElementById("resultTable");
-  table.innerHTML = "";
+  try {
+    const data = await getResults(studentId);
 
-  let total = 0;
-  let subjects = [];
-  let marksArr = [];
+    const table = document.getElementById("resultTable");
+    table.innerHTML = "";
 
-  data.forEach(r => {
-    table.innerHTML += `
-      <tr>
-        <td>${r.subject.name}</td>
-        <td>${r.marks}</td>
-      </tr>
-    `;
+    let total = 0;
+    let subjects = [];
+    let marksArr = [];
 
-    total += r.marks;
-    subjects.push(r.subject.name);
-    marksArr.push(r.marks);
-  });
+    data.forEach(r => {
+      table.innerHTML += `
+        <tr>
+          <td>${r.subject?.name || "N/A"}</td>
+          <td>${r.marks}</td>
+        </tr>
+      `;
 
-  const percentage = total / data.length;
+      total += r.marks;
+      subjects.push(r.subject?.name || "N/A");
+      marksArr.push(r.marks);
+    });
 
-  document.getElementById("total").innerText = total;
-  document.getElementById("percentage").innerText = percentage.toFixed(2);
+    const percentage = data.length ? (total / data.length) : 0;
 
-  // Grade logic
-  let grade = "F";
-  if (percentage >= 90) grade = "A";
-  else if (percentage >= 75) grade = "B";
-  else if (percentage >= 60) grade = "C";
+    document.getElementById("total").innerText = total;
+    document.getElementById("percentage").innerText = percentage.toFixed(2);
 
-  document.getElementById("grade").innerText = grade;
+    // Grade logic
+    let grade = "F";
+    if (percentage >= 90) grade = "A";
+    else if (percentage >= 75) grade = "B";
+    else if (percentage >= 60) grade = "C";
 
-  renderCharts(subjects, marksArr);
+    document.getElementById("grade").innerText = grade;
+
+    renderCharts(subjects, marksArr);
+
+  } catch (err) {
+    console.error("Error loading results:", err.message);
+  }
 }
 
-// Charts
+// ========================== CHARTS ==========================
 function renderCharts(labels, data) {
+  // Destroy old charts (important fix)
+  if (barChart) barChart.destroy();
+  if (pieChart) pieChart.destroy();
 
-  new Chart(document.getElementById("barChart"), {
+  barChart = new Chart(document.getElementById("barChart"), {
     type: "bar",
     data: {
       labels,
@@ -78,7 +93,7 @@ function renderCharts(labels, data) {
     }
   });
 
-  new Chart(document.getElementById("pieChart"), {
+  pieChart = new Chart(document.getElementById("pieChart"), {
     type: "pie",
     data: {
       labels,
@@ -89,5 +104,5 @@ function renderCharts(labels, data) {
   });
 }
 
-// Init
+// ========================== INIT CALL ==========================
 init();

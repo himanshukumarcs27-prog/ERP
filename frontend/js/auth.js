@@ -1,9 +1,16 @@
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
+// ========================== IMPORT API ==========================
+// FIXED PATH (same folder)
+import {
+  loginUser,
+  registerUser,
+  getCurrentUser
+} from "./api.js";
+
 
 // ================== 🔐 LOGIN ==================
 async function login() {
+  console.log("Login function triggered");
+
   const email = document.getElementById("email")?.value;
   const password = document.getElementById("password")?.value;
   const selectedRole = localStorage.getItem("selectedRole");
@@ -12,31 +19,31 @@ async function login() {
     return alert("Email and Password required");
   }
 
+  if (!selectedRole) {
+    return alert("Please select role first");
+  }
+
   try {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password, role: selectedRole })
+    const data = await loginUser({
+      email,
+      password,
+      role: selectedRole
     });
 
-    const data = await res.json();
+    console.log("Login Success:", data);
 
-    if (!res.ok) {
-      throw new Error(data.message || "Login failed");
-    }
-
+    // Save token + role
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.user?.role);
 
     redirectUser(data.user?.role);
 
   } catch (err) {
-    console.error("Login Error:", err.message);
-    alert(err.message);
+    console.error("Login Error FULL:", err);
+    alert(err.message || "Login failed");
   }
 }
+
 
 // ================== 📝 REGISTER ==================
 async function register() {
@@ -54,36 +61,25 @@ async function register() {
   }
 
   try {
-    const res = await fetch(`${BASE_URL}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        role,
-        roll_no,
-        course,
-        semester
-      })
+    await registerUser({
+      name,
+      email,
+      password,
+      role,
+      roll_no,
+      course,
+      semester
     });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Registration failed");
-    }
 
     alert("Registered successfully!");
     window.location.href = "login.html";
 
   } catch (err) {
-    console.error("Register Error:", err.message);
-    alert(err.message);
+    console.error("Register Error FULL:", err);
+    alert(err.message || "Registration failed");
   }
 }
+
 
 // ================== 🔐 REDIRECT ==================
 function redirectUser(role) {
@@ -96,37 +92,36 @@ function redirectUser(role) {
   }
 }
 
-// ================== 🔒 PROTECTED API ==================
-async function getProtectedData() {
-  const token = localStorage.getItem("token");
 
-  if (!token) {
+// ================== 🔒 PROTECTED CHECK ==================
+async function checkAuth() {
+  try {
+    const user = await getCurrentUser();
+    return user;
+  } catch (err) {
     alert("Please login first");
     window.location.href = "../login.html";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${BASE_URL}/students/me`, { // ✅ FIXED
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Unauthorized");
-    }
-
-    return data;
-
-  } catch (err) {
-    console.error("Protected API Error:", err.message);
-    alert(err.message);
   }
 }
 
-// ================== 🌍 GLOBAL ==================
+
+// ================== 🚀 EVENT BINDING ==================
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("Auth JS Loaded");
+
+  const loginBtn = document.getElementById("loginBtn");
+  const registerBtn = document.getElementById("registerBtn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", login);
+  }
+
+  if (registerBtn) {
+    registerBtn.addEventListener("click", register);
+  }
+});
+
+
+// ================== 🌍 GLOBAL (OPTIONAL) ==================
 window.login = login;
 window.register = register;

@@ -1,17 +1,25 @@
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
 
+// ========================== IMPORT API ==========================
+import {
+  getTeachers,
+  addTeacher,
+  deleteTeacher
+} from "../../api.js";
+
+// ========================== GLOBAL ==========================
 let teachers = [];
 
-// LOAD DATA
+// ========================== LOAD DATA ==========================
 async function fetchTeachers() {
-  const res = await fetch(API);
-  teachers = await res.json();
-  displayTeachers(teachers);
+  try {
+    teachers = await getTeachers();
+    displayTeachers(teachers);
+  } catch (err) {
+    console.error("Error fetching teachers:", err.message);
+  }
 }
 
-// DISPLAY TABLE
+// ========================== DISPLAY TABLE ==========================
 function displayTeachers(data) {
   const table = document.getElementById("teacherTable");
   table.innerHTML = "";
@@ -21,17 +29,17 @@ function displayTeachers(data) {
       <tr>
         <td>${t.name}</td>
         <td>${t.email}</td>
-        <td>${t.subject}</td>
+        <td>${t.subject || "N/A"}</td>
         <td>
-          <button onclick="deleteTeacher('${t._id}')">Delete</button>
+          <button onclick="deleteTeacherHandler('${t.id}')">Delete</button>
         </td>
       </tr>
     `;
   });
 }
 
-// SEARCH
-document.getElementById("search").addEventListener("input", (e) => {
+// ========================== SEARCH ==========================
+document.getElementById("search")?.addEventListener("input", (e) => {
   const value = e.target.value.toLowerCase();
 
   const filtered = teachers.filter(t =>
@@ -41,36 +49,41 @@ document.getElementById("search").addEventListener("input", (e) => {
   displayTeachers(filtered);
 });
 
-// ADD TEACHER
-async function addTeacher() {
+// ========================== ADD TEACHER ==========================
+async function addTeacherHandler() {
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
   const subject = document.getElementById("subject").value;
 
-  await fetch(API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ name, email, subject })
-  });
+  if (!name || !email) {
+    alert("Name and Email required");
+    return;
+  }
 
-  closeModal();
-  fetchTeachers();
+  try {
+    await addTeacher({ name, email, subject });
+
+    closeModal();
+    fetchTeachers();
+
+  } catch (err) {
+    console.error("Error adding teacher:", err.message);
+  }
 }
 
-// DELETE
-async function deleteTeacher(id) {
+// ========================== DELETE TEACHER ==========================
+async function deleteTeacherHandler(id) {
   if (!confirm("Delete this teacher?")) return;
 
-  await fetch(`${API}/${id}`, {
-    method: "DELETE"
-  });
-
-  fetchTeachers();
+  try {
+    await deleteTeacher(id);
+    fetchTeachers();
+  } catch (err) {
+    console.error("Error deleting teacher:", err.message);
+  }
 }
 
-// MODAL
+// ========================== MODAL ==========================
 function openModal() {
   document.getElementById("modal").style.display = "block";
 }
@@ -79,5 +92,11 @@ function closeModal() {
   document.getElementById("modal").style.display = "none";
 }
 
-// INIT
+// ========================== GLOBAL ==========================
+window.addTeacherHandler = addTeacherHandler;
+window.deleteTeacherHandler = deleteTeacherHandler;
+window.openModal = openModal;
+window.closeModal = closeModal;
+
+// ========================== INIT ==========================
 fetchTeachers();

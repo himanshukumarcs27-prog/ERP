@@ -1,14 +1,27 @@
-const API =
-window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
 
+// ========================== IMPORT API ==========================
+import { getCurrentUser } from "../../api.js";
+
+// ========================== LOAD PROFILE ==========================
 async function loadProfile() {
-  const res = await fetch(API);
-  const user = await res.json();
+  try {
+    // ✅ Correct API call (uses token internally)
+    const data = await getCurrentUser();
 
-  document.getElementById("name").innerText = user.name;
-  document.getElementById("email").innerText = user.email;
+    // Some APIs return { user }, some return direct object
+    const user = data.user || data;
+
+    document.getElementById("name").innerText = user.name || "N/A";
+    document.getElementById("email").innerText = user.email || "N/A";
+
+  } catch (err) {
+    console.error("Profile Error:", err.message);
+
+    alert("Please login first");
+    window.location.href = "../auth/login.html";
+  }
 }
 
+// ========================== INIT ==========================
 loadProfile();
+

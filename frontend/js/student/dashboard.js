@@ -1,81 +1,74 @@
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
+import {
+  getCurrentUser,
+  getMarks
+} from "../api.js";
 
-async function updateDashboard() {
-  console.log("Dashboard running...");
+// ================= LOAD DASHBOARD =================
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("Dashboard Loaded");
 
-  const token = localStorage.getItem("token");
-
-  // ✅ Token check
-  if (!token) {
-    alert("Please login first");
-    window.location.href = "../login.html";
-    return;
-  }
+  setDate();
 
   try {
-    const res = await fetch(`${BASE_URL}/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const userRes = await getCurrentUser();
 
-    // 🔥 Unauthorized handle
-    if (res.status === 401) {
-      localStorage.clear();
-      window.location.href = "../login.html";
-      return;
-    }
+    console.log("RAW USER RESPONSE:", userRes);
 
-    const result = await res.json();
-    console.log("API DATA:", result);
+    // 🔥 Handle backend response safely
+    const user = userRes.user || userRes.data || userRes;
 
-    const user = result.user || result;
+    // ================= USER INFO =================
+    document.getElementById("welcome-name").innerText =
+      user.name || "Student";
 
-    // ================= UI UPDATE =================
+    document.getElementById("header-student-name").innerText =
+      user.name || "Student";
 
-    const studentName = user.name || "Student";
+    document.getElementById("course").innerText =
+      user.course || "--";
 
-    // Header name
-    const headerEl = document.getElementById("header-student-name");
-    if (headerEl) headerEl.innerText = studentName;
+    document.getElementById("semester").innerText =
+      user.semester || "--";
 
-    // Welcome name
-    const welcomeEl = document.getElementById("welcome-name");
-    if (welcomeEl) welcomeEl.innerText = studentName.split(" ")[0];
+    document.getElementById("profile-pic").src =
+      `https://ui-avatars.com/api/?name=${user.name || "User"}`;
 
-    // Profile image
-    const profileEl = document.getElementById("profile-pic");
-    if (profileEl) {
-      profileEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=0D8ABC&color=fff`;
-    }
-
-    // GPA update
-    if (user.gpa) {
-      const gpaEl = document.querySelector(".gpa-value");
-      if (gpaEl) gpaEl.innerText = user.gpa;
-    }
-
-    // Course
-    if (user.course) {
-      const courseEl = document.getElementById("course");
-      if (courseEl) courseEl.innerText = user.course;
-    }
-
-    // Semester
-    if (user.semester) {
-      const semEl = document.getElementById("semester");
-      if (semEl) semEl.innerText = user.semester;
-    }
-
-    console.log("✅ Dashboard updated successfully");
+    // ================= LOAD SUMMARY =================
+    loadGradesSummary();
 
   } catch (err) {
-    console.error("❌ Dashboard Error:", err.message);
-    alert("Error loading dashboard");
+    console.error("Auth Error:", err);
+    alert("Session expired. Please login again.");
+    window.location.href = "../auth/login.html";
   }
+});
+
+
+// ================= DATE =================
+function setDate() {
+  document.getElementById("current-date").innerText =
+    new Date().toDateString();
 }
 
-// 🚀 Run on load
-document.addEventListener("DOMContentLoaded", updateDashboard);
+
+// ================= GRADES SUMMARY =================
+async function loadGradesSummary() {
+  try {
+    const grades = await getMarks("");
+
+    if (!grades || grades.length === 0) return;
+
+    let total = 0;
+
+    grades.forEach((g) => {
+      total += g.marks;
+    });
+
+    const gpa = (total / grades.length / 25).toFixed(2);
+
+    document.getElementById("gpa").innerText = gpa;
+
+  } catch (err) {
+    console.error("Grades Error:", err);
+  }
+}

@@ -16,12 +16,12 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <i class='bx bxs-graduation logo-icon'></i>
-            <span class="logo-text"> ERP</span>
+            <span class="logo-text">ERP</span>
         </div>
 
         <nav class="sidebar-nav">
             <a href="#" class="nav-item active"><i class='bx bxs-dashboard'></i> Dashboard</a>
-            <a href="#" class="nav-item"><i class='bx bxs-book-open'></i> My Courses</a>
+            <a href="../student/courses.html" class="nav-item">My Courses</a>
             <a href="#" class="nav-item"><i class='bx bxs-bar-chart-alt-2'></i> Grades</a>
             <a href="#" class="nav-item"><i class='bx bxs-calendar'></i> Schedule</a>
             <a href="#" class="nav-item"><i class='bx bxs-user-check'></i> Attendance</a>
@@ -29,7 +29,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <a href="../login.html"><i class='bx bx-log-out'></i> Logout</a>
+            <a href="../auth/login.html"><i class='bx bx-log-out'></i> Logout</a>
         </div>
     </aside>
 
@@ -82,7 +82,7 @@
                             <div class="metric-item">
                                 <span class="label">Overall GPA</span>
                                 <div class="value-row">
-                                    <strong class="gpa-value">0.0</strong>
+                                    <strong class="gpa-value" id="gpa">0.0</strong>
                                     <small>/ 4.0</small>
                                 </div>
                             </div>
@@ -137,7 +137,7 @@
                     </div>
 
                     <div id="courses-container">
-                        <!-- Dynamic courses will come here -->
+                        <p>Loading courses...</p>
                     </div>
                 </div>
 
@@ -148,13 +148,17 @@
                     <section class="card side-card">
                         <h3>Upcoming Schedule</h3>
                         <p class="sub-label">Today's classes</p>
-                        <div id="schedule-container"></div>
+                        <div id="schedule-container">
+                            <p>Loading schedule...</p>
+                        </div>
                     </section>
 
                     <!-- GRADES -->
                     <section class="card side-card">
                         <h3>Recent Grades</h3>
-                        <div id="grades-container"></div>
+                        <div id="grades-container">
+                            <p>Loading grades...</p>
+                        </div>
                     </section>
 
                     <!-- QUICK ACCESS -->
@@ -171,8 +175,8 @@
         </div>
     </main>
 
-    <!-- ========== SCRIPT ========== -->
-    <script type="module" src="../../js/student/dashboard.js"></script> 
+    <!-- SCRIPT -->
+    <script type="module" src="../../js/student/dashboard.js"></script>
 
 </body>
 </html>

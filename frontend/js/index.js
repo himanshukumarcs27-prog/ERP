@@ -1,16 +1,27 @@
+
 document.addEventListener("DOMContentLoaded", () => {
   const roleCards = document.querySelectorAll(".role-card");
 
+  if (!roleCards.length) {
+    console.warn("No role cards found");
+    return;
+  }
+
   roleCards.forEach((card) => {
     card.addEventListener("click", () => {
-      // Get role from data-role attribute
-      const role = card.getAttribute("data-role");
+      const role = card.dataset.role; // cleaner than getAttribute
 
-      // Save to localStorage for the login page to use
+      if (!role) {
+        console.error("Role not defined on card");
+        return;
+      }
+
+      // Save role
       localStorage.setItem("selectedRole", role);
 
-      // Redirect to login page
-      window.location.href = "pages/auth/login.html";
+      // Redirect
+      window.location.href = "/pages/auth/login.html"; // 🔥 absolute path for Vercel
     });
   });
 });
+

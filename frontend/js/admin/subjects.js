@@ -1,18 +1,25 @@
-const API = 
-  window.location.hostname === "localhost"
-    ? "http://localhost:5000/api"
-    : "https://erp-ten-pied.vercel.app/api";
 
+// ========================== IMPORT API ==========================
+import {
+  getSubjects,
+  addSubject,
+  deleteSubject
+} from "../../api.js";
+
+// ========================== GLOBAL ==========================
 let subjects = [];
 
-// LOAD SUBJECTS
+// ========================== LOAD SUBJECTS ==========================
 async function fetchSubjects() {
-  const res = await fetch(API);
-  subjects = await res.json();
-  displaySubjects(subjects);
+  try {
+    subjects = await getSubjects();
+    displaySubjects(subjects);
+  } catch (err) {
+    console.error("Error fetching subjects:", err.message);
+  }
 }
 
-// DISPLAY TABLE
+// ========================== DISPLAY TABLE ==========================
 function displaySubjects(data) {
   const table = document.getElementById("subjectTable");
   table.innerHTML = "";
@@ -22,15 +29,15 @@ function displaySubjects(data) {
       <tr>
         <td>${sub.name}</td>
         <td>
-          <button onclick="deleteSubject('${sub._id}')">Delete</button>
+          <button onclick="deleteSubjectHandler('${sub.id}')">Delete</button>
         </td>
       </tr>
     `;
   });
 }
 
-// SEARCH
-document.getElementById("search").addEventListener("input", (e) => {
+// ========================== SEARCH ==========================
+document.getElementById("search")?.addEventListener("input", (e) => {
   const value = e.target.value.toLowerCase();
 
   const filtered = subjects.filter(s =>
@@ -40,36 +47,39 @@ document.getElementById("search").addEventListener("input", (e) => {
   displaySubjects(filtered);
 });
 
-// ADD SUBJECT
-async function addSubject() {
+// ========================== ADD SUBJECT ==========================
+async function addSubjectHandler() {
   const name = document.getElementById("subjectName").value;
 
-  if (!name) return alert("Enter subject name");
+  if (!name) {
+    alert("Enter subject name");
+    return;
+  }
 
-  await fetch(API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ name })
-  });
+  try {
+    await addSubject({ name });
 
-  closeModal();
-  fetchSubjects();
+    closeModal();
+    fetchSubjects();
+
+  } catch (err) {
+    console.error("Error adding subject:", err.message);
+  }
 }
 
-// DELETE SUBJECT
-async function deleteSubject(id) {
+// ========================== DELETE SUBJECT ==========================
+async function deleteSubjectHandler(id) {
   if (!confirm("Delete this subject?")) return;
 
-  await fetch(`${API}/${id}`, {
-    method: "DELETE"
-  });
-
-  fetchSubjects();
+  try {
+    await deleteSubject(id);
+    fetchSubjects();
+  } catch (err) {
+    console.error("Error deleting subject:", err.message);
+  }
 }
 
-// MODAL
+// ========================== MODAL ==========================
 function openModal() {
   document.getElementById("modal").style.display = "block";
 }
@@ -78,5 +88,11 @@ function closeModal() {
   document.getElementById("modal").style.display = "none";
 }
 
-// INIT
+// ========================== GLOBAL ==========================
+window.addSubjectHandler = addSubjectHandler;
+window.deleteSubjectHandler = deleteSubjectHandler;
+window.openModal = openModal;
+window.closeModal = closeModal;
+
+// ========================== INIT ==========================
 fetchSubjects();

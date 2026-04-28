@@ -1,6 +1,11 @@
-import app from "../backend/server.js";
-import serverless from "serverless-http";
+import express from "express";
 
-const handler = serverless(app);
+const app = express();
 
-export default handler;
+app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
+export default app;

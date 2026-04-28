@@ -1,34 +1,31 @@
-// ========================== CONFIG ==========================
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
+// ========================== IMPORT API ==========================
+import {
+  getStudents,
+  getSubjects,
+  getMarks,
+  addMarks,
+  generateResults
+} from "../api.js";
 
-const STUDENT_API = `${BASE_URL}/students`;
-const SUBJECT_API = `${BASE_URL}/subjects`;
-const ADD_MARKS_API = `${BASE_URL}/marks/add`;
-const GET_MARKS_API = `${BASE_URL}/marks`;
-
+// ========================== GLOBAL ==========================
 let students = [];
 let subjects = [];
+let chartInstance = null; // 🔥 prevent duplicate graph
 
 // ========================== INIT ==========================
 async function init() {
-  const token = localStorage.getItem("token");
+  console.log("Marks page loaded");
 
   try {
-    // Fetch Students
-    const sRes = await fetch(STUDENT_API, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    students = await sRes.json();
+    const studentRes = await getStudents();
+    const subjectRes = await getSubjects();
 
-    // Fetch Subjects
-    const subRes = await fetch(SUBJECT_API, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    subjects = await subRes.json();
+    students = studentRes.data || studentRes;
+    subjects = subjectRes.data || subjectRes;
 
     loadDropdowns();
+
+    loadGraph(); // 🔥 IMPORTANT (missing before)
 
   } catch (err) {
     console.error("Init error:", err);
@@ -54,8 +51,6 @@ function loadDropdowns() {
 
 // ========================== SUBMIT MARKS ==========================
 async function submitMarks() {
-  const token = localStorage.getItem("token");
-
   const student_id = document.getElementById("studentSelect").value;
   const subject_id = document.getElementById("subjectSelect").value;
   const marks = document.getElementById("marks").value;
@@ -66,69 +61,52 @@ async function submitMarks() {
   }
 
   try {
-    const res = await fetch(ADD_MARKS_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        student_id,
-        subject_id,
-        marks: Number(marks),
-        exam_type: "midterm"
-      })
+    await addMarks({
+      student_id,
+      subject_id,
+      marks: Number(marks),
+      exam_type: "midterm"
     });
-
-    const result = await res.json();
-
-    if (!res.ok) {
-      throw new Error(result.message);
-    }
 
     alert("✅ Marks saved successfully!");
 
-    // 🔥 Refresh table instantly
     fetchMarks();
+    loadGraph(); // 🔥 update graph after new marks
 
   } catch (err) {
     console.error("Error saving marks:", err);
-    alert("❌ Failed to save marks");
   }
 }
 
 // ========================== FETCH MARKS ==========================
 async function fetchMarks() {
-  const token = localStorage.getItem("token");
   const subject_id = document.getElementById("subjectSelect").value;
 
-  if (!subject_id) return;
+  if (!subject_id) {
+    document.getElementById("marksTable").innerHTML =
+      `<tr><td colspan="4">Select subject first</td></tr>`;
+    return;
+  }
 
   try {
-    const res = await fetch(
-      `${GET_MARKS_API}?subject_id=${subject_id}`,
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-
-    const result = await res.json();
+    const res = await getMarks(subject_id);
+    const marksData = res.data || res;
 
     const table = document.getElementById("marksTable");
     table.innerHTML = "";
 
-    if (!result.data || result.data.length === 0) {
+    if (!marksData || marksData.length === 0) {
       table.innerHTML = `<tr><td colspan="4">No data found</td></tr>`;
       return;
     }
 
-    result.data.forEach(m => {
+    marksData.forEach(m => {
       table.innerHTML += `
         <tr>
           <td>${m.students?.name || "N/A"}</td>
           <td>${m.subjects?.name || "N/A"}</td>
           <td>${m.marks ?? 0}</td>
-          <td>${m.grade ? m.grade : "Not Generated"}</td>
+          <td>${m.grade || "Not Generated"}</td>
         </tr>
       `;
     });
@@ -137,39 +115,73 @@ async function fetchMarks() {
     console.error("Error fetching marks:", err);
   }
 }
-async function generateResult() {
-  const token = localStorage.getItem("token");
 
-  const class_id = "PUT_YOUR_CLASS_ID"; // 🔥 replace this
-
+// ========================== GRAPH ==========================
+async function loadGraph() {
   try {
-    const res = await fetch(
-      "http://localhost:5000/api/results/generate-class",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ class_id }),
-      }
-    );
+    const class_id = 1; // 🔥 FIXED (replace later dynamically)
 
+    const res = await fetch(`http://localhost:5000/api/results/analytics?class_id=${class_id}`);
     const data = await res.json();
 
-    alert("✅ Result Generated!");
+    console.log("Graph Data:", data);
+
+    if (!data.chartData) return;
+
+    document.getElementById("avgMarks").innerText = data.avgMarks?.toFixed(2) || 0;
+    document.getElementById("avgPercent").innerText = data.avgPercentage?.toFixed(2) || 0;
+
+    const labels = data.chartData.map(d => d.name);
+    const marks = data.chartData.map(d => d.marks);
+
+    const ctx = document.getElementById("marksChart");
+
+    // 🔥 destroy old chart
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Student Marks",
+          data: marks
+        }]
+      }
+    });
 
   } catch (err) {
-    console.error(err);
+    console.error("Graph error:", err);
+  }
+}
+
+// ========================== GENERATE RESULT ==========================
+async function generateResult() {
+  const class_id = 1;
+
+  try {
+    await generateResults(class_id);
+    alert("✅ Result Generated!");
+
+    fetchMarks();
+    loadGraph(); // 🔥 update graph
+
+  } catch (err) {
+    console.error("Error generating result:", err);
     alert("❌ Error generating result");
   }
 }
 
 // ========================== EVENTS ==========================
+document.addEventListener("DOMContentLoaded", () => {
+  init();
 
-// 🔥 Auto fetch when subject changes
-document.getElementById("subjectSelect")
-  .addEventListener("change", fetchMarks);
+  document.getElementById("subjectSelect")
+    ?.addEventListener("change", fetchMarks);
+});
 
-// ========================== START ==========================
-init();
+// ========================== GLOBAL ==========================
+window.submitMarks = submitMarks;
+window.generateResult = generateResult;

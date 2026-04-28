@@ -1,23 +1,16 @@
-const API_BASE =
- BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
 
-// 🔐 Token (login ke baad save kiya hoga)
-const token = localStorage.getItem("token");
+// ========================== IMPORT API ==========================
+import { apiRequest } from "../../api.js";
 
 // ================= LOAD CLASSES =================
 async function loadClasses() {
   try {
-    const res = await fetch(`${API_BASE}/classes`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const data = await res.json();
+    const data = await apiRequest("/classes", "GET", null, true);
 
     const classSelect = document.getElementById("classSelect");
+
+    // 🔥 reset dropdown
+    classSelect.innerHTML = `<option value="">Select Class</option>`;
 
     data.forEach(cls => {
       const option = document.createElement("option");
@@ -27,26 +20,25 @@ async function loadClasses() {
     });
 
   } catch (err) {
-    console.error("Error loading classes:", err);
+    console.error("Error loading classes:", err.message);
   }
 }
 
 // ================= LOAD SUBJECTS =================
 async function loadSubjects() {
   const classId = document.getElementById("classSelect").value;
-
   if (!classId) return;
 
   try {
-    const res = await fetch(`${API_BASE}/subjects/class/${classId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const subjects = await res.json();
+    const subjects = await apiRequest(
+      `/subjects/class/${classId}`,
+      "GET",
+      null,
+      true
+    );
 
     const subjectSelect = document.getElementById("subjectSelect");
+
     subjectSelect.innerHTML = `<option value="">Select Subject</option>`;
 
     subjects.forEach(sub => {
@@ -57,24 +49,22 @@ async function loadSubjects() {
     });
 
   } catch (err) {
-    console.error("Error loading subjects:", err);
+    console.error("Error loading subjects:", err.message);
   }
 }
 
 // ================= LOAD STUDENTS =================
 async function loadStudents() {
   const classId = document.getElementById("classSelect").value;
-
   if (!classId) return;
 
   try {
-    const res = await fetch(`${API_BASE}/students?class_id=${classId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const students = await res.json();
+    const students = await apiRequest(
+      `/students?class_id=${classId}`,
+      "GET",
+      null,
+      true
+    );
 
     const table = document.getElementById("studentsTable");
     table.innerHTML = "";
@@ -99,7 +89,7 @@ async function loadStudents() {
     });
 
   } catch (err) {
-    console.error("Error loading students:", err);
+    console.error("Error loading students:", err.message);
   }
 }
 
@@ -113,8 +103,7 @@ async function submitMarks() {
   }
 
   const inputs = document.querySelectorAll(".marks-input");
-
-  let promises = [];
+  const promises = [];
 
   inputs.forEach(input => {
     const studentId = input.dataset.studentId;
@@ -122,37 +111,42 @@ async function submitMarks() {
 
     if (!marks) return;
 
-    const payload = {
-      student_id: studentId,
-      subject_id: subjectId,
-      marks: Number(marks),
-      exam_type: "midterm" // change later if needed
-    };
-
     promises.push(
-      fetch(`${API_BASE}/marks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+      apiRequest(
+        "/marks",
+        "POST",
+        {
+          student_id: studentId,
+          subject_id: subjectId,
+          marks: Number(marks),
+          exam_type: "midterm"
         },
-        body: JSON.stringify(payload)
-      })
+        true
+      )
     );
   });
 
   try {
     await Promise.all(promises);
-
     alert("✅ Marks submitted successfully");
 
   } catch (err) {
-    console.error("Error submitting marks:", err);
+    console.error("Error submitting marks:", err.message);
     alert("❌ Failed to submit marks");
   }
 }
+
+// ================= EVENTS =================
+document.getElementById("classSelect")?.addEventListener("change", () => {
+  loadSubjects();
+  loadStudents();
+});
 
 // ================= INIT =================
 window.onload = () => {
   loadClasses();
 };
+
+// ================= GLOBAL =================
+window.submitMarks = submitMarks;
+

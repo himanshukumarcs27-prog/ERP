@@ -1,52 +1,70 @@
-// Inside frontend/js/teacher/dashboard.js
-const BASE_URL = window.location.hostname.includes("localhost")
-  ? "http://localhost:5000/api"
-  : "https://erp-ten-pied.vercel.app/api";
+// ================= IMPORT =================
+
+import { apiRequest } from "../../js/api.js";
+
+// ================= LOAD DASHBOARD =================
 async function loadTeacherDashboard() {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        window.location.href = '../auth/login.html';
-        return;
-    }
+  const token = localStorage.getItem("token");
 
-    try {
-        // Fetch teacher specific profile
+  if (!token) {
+    window.location.href = "../auth/login.html";
+    return;
+  }
 
-     
-        const response = await fetch(BASE_URL, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+  try {
+    // 🔥 CORRECT API
+    const data = await apiRequest("/teachers/dashboard-data", "GET", null, true);
 
-        const data = await response.json();
+    console.log("Dashboard Data:", data); // DEBUG
 
-        if (response.ok) {
-            renderTeacherUI(data);
-        }
-    } catch (error) {
-        console.error("Error connecting to Teacher API:", error);
-    }
+    renderTeacherUI(data);
+
+  } catch (error) {
+    console.error("Dashboard Error:", error.message);
+    alert("Failed to load dashboard");
+  }
 }
 
+
+// ================= RENDER UI =================
 function renderTeacherUI(data) {
-    // 1. Update Name & Profile
-    // Note: We use "Dr." or "Prof." prefix for teachers as seen in the image
-    const fullName = data.name || "Professor";
-    document.getElementById('teacher-name-header').innerText = `Dr. ${fullName}`;
-    document.getElementById('welcome-teacher').innerText = `Dr. ${fullName.split(' ')[0]}`;
-    document.getElementById('teacher-profile-pic').src = `https://ui-avatars.com/api/?name=${fullName}&background=1e3a5f&color=fff`;
 
-    // 2. Update Stats
-    document.getElementById('dept-name').innerText = data.department || "General Faculty";
-    document.getElementById('total-students-count').innerText = data.totalStudents || "0";
-    document.getElementById('pending-tasks').innerText = data.pendingAssignments || "0";
+  const name = data.name || "Teacher";
 
-    // 3. Logic for Dynamic Classes (Optional)
-    // If you have a loop to show classes, you would inject them into #classes-list
+  document.getElementById("teacher-name-header").innerText = name;
+  document.getElementById("welcome-teacher").innerText = name;
+
+  document.getElementById("teacher-profile-pic").src =
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+
+  document.getElementById("dept-name").innerText =
+    data.department || "N/A";
+
+  document.getElementById("total-students-count").innerText =
+    data.totalStudents || 0;
+
+  document.getElementById("pending-tasks").innerText =
+    data.pendingAssignments || 0;
+
+  // OPTIONAL: classes rendering
+  const classesDiv = document.getElementById("classes-list");
+  if (classesDiv && data.classes) {
+    classesDiv.innerHTML = "";
+
+    data.classes.forEach((c, i) => {
+      classesDiv.innerHTML += `
+        <div class="course-card">
+          <div class="card-head">
+            <span>${i + 1}) ${c.code}</span>
+          </div>
+          <h4>${c.name}</h4>
+          <p>${c.schedule || "N/A"}</p>
+        </div>
+      `;
+    });
+  }
 }
 
-document.addEventListener('DOMContentLoaded', loadTeacherDashboard);
+
+// ================= INIT =================
+document.addEventListener("DOMContentLoaded", loadTeacherDashboard);
